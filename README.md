@@ -2,3 +2,4 @@
 - 🧑‍💻 I’m interested in ... the world of IOT
 - 👾 I’m currently learning ... coding
 - 👫 I’m looking to collaborate on ... cool things
+- 🏠 Enjoying Home Assistant, Home Assistant and Scrypted
