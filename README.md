@@ -4,3 +4,5 @@ markdown: kramdown
 - 👾 I’m currently learning ... coding
 - 👫 I’m looking to collaborate on ... cool things
 - 🏠 Enjoying <a href="https://www.home-assistant.io/" target="_blank" rel="noopener">Home Assistant</a>, <a href="https://homebridge.io/" target="_blank" rel="noopener">Homebridge</a> and <a href="https://scrypted.app/" target="_blank" rel="noopener">Scrypted</a>
+
+<p>Testing <a href="example.com" target="_blank" rel="noopener noreferrer">example Link Test</a>.</p>
