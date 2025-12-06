@@ -19,8 +19,6 @@ if [[ "$EUID" -ne 0 ]]; then
     exit 1
   fi
 
-  echo "This script needs sudo/root. Re-running with sudo..."
-
   # Re-run this script as root, passing the password as $1
   echo "$thePassword" | sudo -S bash "$0" "$thePassword" "$@"
   exit $?
@@ -33,8 +31,6 @@ fi
 # Capture password passed to script (from the non-root instance)
 PASSWORD="$1"
 
-echo "[+] Running as root"
-echo "[+] You passed password: ${PASSWORD}"
 
 echo "[+] Downloading message script to $SCRIPT_PATH ..."
 curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
