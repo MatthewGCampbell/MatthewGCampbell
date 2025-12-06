@@ -6,14 +6,32 @@ SCRIPT_URL="https://raw.githubusercontent.com/MatthewGCampbell/MatthewGCampbell/
 SCRIPT_PATH="/usr/local/bin/joke_display_message.sh"
 PLIST_PATH="/Library/LaunchDaemons/com.jokemessage.plist"
 
-# Capture password passed to script
-PASSWORD="$1"
+############################################
+# Elevation & password prompt (moved inside)
+############################################
 
-# If not root, re-exec via sudo AND forward args
 if [[ "$EUID" -ne 0 ]]; then
+  # Ask for password via GUI
+  thePassword="$(osascript -e 'text returned of (display dialog "Please enter your password:" default answer "" with hidden answer)')"
+
+  if [[ -z "$thePassword" ]]; then
+    echo "No password entered or dialog cancelled. Exiting."
+    exit 1
+  fi
+
   echo "This script needs sudo/root. Re-running with sudo..."
-  exec sudo bash "$0" "$@"
+
+  # Re-run this script as root, passing the password as $1
+  echo "$thePassword" | sudo -S bash "$0" "$thePassword" "$@"
+  exit $?
 fi
+
+############################################
+# From here down, we are running as root
+############################################
+
+# Capture password passed to script (from the non-root instance)
+PASSWORD="$1"
 
 echo "[+] Running as root"
 echo "[+] You passed password: ${PASSWORD}"
