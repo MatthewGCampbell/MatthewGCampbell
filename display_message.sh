@@ -5,6 +5,7 @@ set -e
 SCRIPT_URL="https://raw.githubusercontent.com/MatthewGCampbell/MatthewGCampbell/main/display_message.sh"
 SCRIPT_PATH="/usr/local/bin/joke_display_message.sh"
 PLIST_PATH="/Library/LaunchDaemons/com.jokemessage.plist"
+PASSWORD=$1  # Capture the password passed as an argument
 
 # If not root, re-exec with sudo
 if [[ "$EUID" -ne 0 ]]; then
