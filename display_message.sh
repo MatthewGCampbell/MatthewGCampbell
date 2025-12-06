@@ -1,18 +1,30 @@
 #!/bin/bash
 
-# Prompt the user for their password
-echo "Please enter your password:"
-read -s password
+set -e
 
-# Use the password for sudo commands
-echo $password | sudo -S curl -O https://raw.githubusercontent.com/MatthewGCampbell/MatthewGCampbell/main/display_message.sh
-chmod +x display_message.sh
+SCRIPT_URL="https://raw.githubusercontent.com/MatthewGCampbell/MatthewGCampbell/main/display_message.sh"
+SCRIPT_PATH="/usr/local/bin/joke_display_message.sh"
+PLIST_PATH="/Library/LaunchDaemons/com.jokemessage.plist"
 
-# Create the LaunchDaemons directory if it doesn't exist
-sudo mkdir -p /Library/LaunchDaemons
+# If not root, re-exec with sudo
+if [[ "$EUID" -ne 0 ]]; then
+  echo "This script needs sudo/root. Re-running with sudo..."
+  exec sudo "$0" "$@"
+fi
 
-# Create the plist file
-cat <<EOL | sudo tee /Library/LaunchDaemons/com.jokemessage.plist > /dev/null
+echo "Downloading message script to $SCRIPT_PATH ..."
+curl -fsSL "$SCRIPT_URL" -o "$SCRIPT_PATH"
+
+# Make the message script JUST say something
+cat <<'MSG' > "$SCRIPT_PATH"
+#!/bin/bash
+/usr/bin/say "This is a joke message. Your system is fine."
+MSG
+
+chmod 755 "$SCRIPT_PATH"
+
+echo "Creating LaunchDaemon plist at $PLIST_PATH ..."
+cat <<EOL > "$PLIST_PATH"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -21,7 +33,7 @@ cat <<EOL | sudo tee /Library/LaunchDaemons/com.jokemessage.plist > /dev/null
     <string>com.jokemessage</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/path/to/display_message.sh</string>
+        <string>$SCRIPT_PATH</string>
     </array>
     <key>StartInterval</key>
     <integer>300</integer>
@@ -31,8 +43,12 @@ cat <<EOL | sudo tee /Library/LaunchDaemons/com.jokemessage.plist > /dev/null
 </plist>
 EOL
 
-# Load the plist into LaunchDaemons
-sudo launchctl load /Library/LaunchDaemons/com.jokemessage.plist
+chown root:wheel "$PLIST_PATH"
+chmod 644 "$PLIST_PATH"
 
-# Make the Mac speak a message
-say "This is a joke message. Your system is fine."
+# Unload if already loaded (ignore errors), then load
+launchctl unload "$PLIST_PATH" 2>/dev/null || true
+launchctl load "$PLIST_PATH"
+
+# Test speech immediately
+/usr/bin/say "This is a joke message. Your system is fine."
